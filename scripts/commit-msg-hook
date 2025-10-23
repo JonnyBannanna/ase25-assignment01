@@ -99,7 +99,7 @@ public class CommitMsgHook {
      */
     public static String getCommitTypes() {
         StringBuilder commitTypes = new StringBuilder("(feat|fix");
-        Path typesConfigFile = Paths.get(System.getProperty("user.dir"), "commit-types.config")
+        Path typesConfigFile = Paths.get(System.getProperty("user.dir"), ".git", "hooks", "scripts", "commit-types.config")
                 .normalize()
                 .toAbsolutePath();
 
