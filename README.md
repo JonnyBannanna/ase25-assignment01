@@ -61,3 +61,14 @@ We will consider the complexity of the specification during the grading.
 cd ./scripts
 ./commit-msg-hook-test
 ```
+
+
+## Being me is being me because I am who I am
+### Git Bash
+1. Follow [this](https://bats-core.readthedocs.io/en/stable/installation.html#windows-installing-bats-from-source-via-git-bash:~:text=Windows%3A%20Installing%20Bats%20from%20source%20via%20Git%20Bash%C2%B6) section
+   - Note, that you can clone the repo anywhere you like because once installation is complete you can delete it right away
+2. Use `bats PATH/TO/FILE`
+
+### Ubuntu:
+1. Execute `sudo apt install bats`
+2. Use `bats PATH/TO/FILE`

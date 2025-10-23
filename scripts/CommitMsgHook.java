@@ -1,13 +1,114 @@
+import java.util.regex.Pattern;
+
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+
+import java.io.BufferedReader;
+import java.io.IOException;
+
+
 public class CommitMsgHook {
+    // Java regex list: https://docs.oracle.com/javase/8/docs/api/java/util/regex/Pattern.html
+    
+    // util
+    private final static String word = "[A-Za-z]+";         // Only letters
+    private final static String noun = "[A-Za-z0-9-]+";     // Only letters, numbers or hyphens
+    
+    // header
+    private final static String type = "(?i)" + getCommitTypes();           // case-insensitive
+    private final static String scope = "(\\(" + noun + "\\))?";            // Optional scope in brackets
+    private final static String description = noun + "( " + noun + ")*";    // Description must consist of at least one noun
+    private final static String headerSection = type + scope + "!?: " + description + ".?";
+
+    // footer
+    private final static String footer = "(" + word + "(-" + word + ")*|BREAKING CHANGE)(: | #)(?s).+"; // If a footer is provided, it must consist of a word token
+    private final static String footerSection = footer + "(\\R" + footer + ")*";
+
+    // body
+    private final static String noColons = "(?!.*:)";       // Quickfix to pass test "reject valid footer format (colon) but invalid footer token" => simply ban all colons from body sections
+                                                            // NOTE: To me this makes little sense as I often use colons in body sections but allowing colons makes differentiating between footer and body too hard
+    private final static String noBreaking = "(?!BREAKING(?:-| )CHANGE)";                   // body section is not allowed to start with this keyword (case insensitive)
+    private final static String bodySection = "(?si)" + noBreaking + noColons + ".*\\S.*";  // If a body is provided, it must contain at least one visible sign
+
+    // What to do with 11, 12, 13, 16?
+    // 11, 12: semantic has nothing to do with regex but with the content of the commit
+    // 13: The regex part is already done with (1), the semantic has nothing to do with regex
+    // 16: my regex accepts both versions but semantic interpretation is not part of regex
+
+
+    /**
+     * Main function to execute the validation process of commit messages.
+     */
     public static void main(String[] args) {
         String commitMessage = args[0];
+        if(commitMessage.isEmpty()) { System.exit(1); }
+        
+        // Prepare regex patterns
+        Pattern headerPattern = Pattern.compile(headerSection);
+        Pattern bodyPattern = Pattern.compile(bodySection);
+        Pattern footerPattern = Pattern.compile(footerSection);
 
-        if (commitMessage.isEmpty()) {
-            System.out.println("Commit message is invalid.");
-            System.exit(1);
+        // Debug
+        /*
+        System.out.println("\n##########\n");
+        System.out.println("Header: " + headerPattern);
+        System.out.println("Body:   " + bodyPattern);
+        System.out.println("Footer: " + footerPattern);
+        System.out.println("\n##########\n");
+        */
+    
+        // Validate commit msg
+        String[] sections = commitMessage.split("\\R\\R"); // Split at blank lines to separate the sections
+        int exitCode = 0;
+
+        switch(sections.length){
+            case 3:
+                if(!bodyPattern.matcher(sections[1]).matches()) {
+                    exitCode = 1;
+                    break;
+                }
+            case 2:
+                if(!footerPattern.matcher(sections[sections.length - 1]).matches()) {
+                    // Check if part is body section instead of footer section
+                    if(sections.length == 2 && !bodyPattern.matcher(sections[sections.length - 1]).matches()) {
+                        exitCode = 1;
+                        break;
+                    }
+                }
+            case 1:
+                if(!headerPattern.matcher(sections[0]).matches()) {
+                    exitCode = 1;
+                }
+                break;
+            default:
+                // More than 3 parts => additional blank lines not supported by the format
+                exitCode = 1;
         }
+        
+        System.exit(exitCode);
+    }
 
-        System.out.println("Commit message is valid.");
-        System.exit(0);
+    /**
+     * Generates a regex pattern that matches all allowed commit types.
+     *
+     * @return a regex string representing all allowed commit types, e.g. "(feat|fix)"
+     */
+    public static String getCommitTypes() {
+        StringBuilder commitTypes = new StringBuilder("(feat|fix");
+        Path typesConfigFile = Paths.get(System.getProperty("user.dir"), "commit-types.config")
+                .normalize()
+                .toAbsolutePath();
+
+        try (BufferedReader fileReader = Files.newBufferedReader(typesConfigFile)) {
+            String line;
+
+            while ((line = fileReader.readLine()) != null) {
+                if(line.startsWith("//")) { continue; }     // Ignore comments
+                commitTypes.append("|" + line.trim());
+            }
+        } catch (IOException e) { e.printStackTrace(); }
+
+        return commitTypes.append(")").toString();
     }
 }

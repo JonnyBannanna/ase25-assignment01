@@ -1,16 +1,82 @@
 #!/usr/local/bin/java --source 21
 // TODO: Update path of your Java binary if necessary
 
+
+import java.util.regex.Pattern;
+
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+
+import java.io.BufferedReader;
+import java.io.IOException;
+
+
 public class CommitMsgHook {
+    // Java regex list: https://docs.oracle.com/javase/8/docs/api/java/util/regex/Pattern.html
+    
+    // util
+    private final static String word = "[A-Za-z]+";         // Only letters
+    private final static String noun = "[A-Za-z0-9-]+";     // Only letters, numbers or hyphens
+    private final static String blankLine = "\\R\\R";
+    
+    // header
+    private final static String scope = "(\\(" + noun + "\\))?";    // Optional scope in brackets
+    private final static String type = getCommitTypes();
+    private final static String description = noun + "( " + noun + ")*";    // Description must contain of at least one noun
+    private final static String headerSection = type + scope + "!?: " + description + ".?";
+    
+    // body
+    private final static String bodySection = "(" + blankLine + "(?s).*)?";
+
+    // footer
+    private final static String footer = "(" + word + "(-" + word + ")*|BREAKING CHANGE)(: | #)(?s).+";
+    private final static String footerSection = "(" + blankLine + footer + "\\R(" + footer + ")*)?";
+
+    // final
+    private final static String commitMsgRegex = "^" + headerSection + bodySection + footerSection + "$";
+
+    // What to do with 11, 12, 13, 16?
+    // 11, 12: semantic has nothing to do with regex but with the content of the commit
+    // 13: The regex part is already done with (1), the semantic has nothing to do with regex
+    // 16: my regex accepts both versions but semantic interpretation is not part of regex
+
+
     public static void main(String[] args) {
+        //System.out.println(commitMsgRegex);
+        Pattern commitMsgPattern = Pattern.compile(commitMsgRegex);
+
         String commitMessage = args[0];
 
-        if (commitMessage.isEmpty()) {
-            System.out.println("Commit message is invalid.");
+        if (commitMessage.isEmpty() || !commitMsgPattern.matcher(commitMessage).matches()) {
+            //System.out.println("Commit message is invalid.");
             System.exit(1);
         }
 
-        System.out.println("Commit message is valid.");
+        //System.out.println("Commit message is valid.");
         System.exit(0);
+    }
+
+    /**
+     * Generates a regex pattern that matches all allowed commit types.
+     *
+     * @return a regex string representing all allowed commit types, e.g. "(feat|fix)"
+     */
+    public static String getCommitTypes() {
+        StringBuilder commitTypes = new StringBuilder("(feat|fix");
+        Path typesConfigFile = Paths.get(System.getProperty("user.dir"), "commit-types.config")
+                .normalize()
+                .toAbsolutePath();
+
+        try (BufferedReader fileReader = Files.newBufferedReader(typesConfigFile)) {
+            String line;
+
+            while ((line = fileReader.readLine()) != null) {
+                if(line.startsWith("//")) { continue; }     // Ignore comments
+                commitTypes.append("|" + line.trim());
+            }
+        } catch (IOException e) { e.printStackTrace(); }
+
+        return commitTypes.append(")").toString();
     }
 }

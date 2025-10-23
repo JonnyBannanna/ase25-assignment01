@@ -1,4 +1,4 @@
-#!/usr/local/bin/bats
+#!/usr/bin/env bats
 # TODO: update path of Bats binary if necessary
 
 # Based on: https://chatgpt.com/share/672baa75-12a4-8005-be19-a2aaf2a52d0a
