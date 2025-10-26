@@ -41,8 +41,7 @@ public class CommitMsgHook {
      * Main function to execute the validation process of commit messages.
      */
     public static void main(String[] args) {
-        //String commitMessage = args[0];
-        String commitMessage = "doc: add feature with colon";
+        String commitMessage = args[0];
         if(commitMessage.isEmpty()) { System.exit(1); }
         
         // Prepare regex patterns
@@ -58,29 +57,22 @@ public class CommitMsgHook {
         System.out.println("Footer: " + footerPattern);
         System.out.println("\n##########\n");
         */
-
-        System.out.println("Test message matches: " + headerPattern.matcher(commitMessage).matches());
     
         // Validate commit msg
         String[] sections = commitMessage.split("\\R\\R"); // Split at blank lines to separate the sections
-
-        for(int i = 0; i < sections.length; i++) {
-            System.out.println("sections[" + i + "]: " + sections[i]);
-        }
-
         int exitCode = 0;
 
         switch(sections.length){
             case 3:
                 if(!bodyPattern.matcher(sections[1]).matches()) {
-                    exitCode = 1;
+                    exitCode = 3;
                     break;
                 }
             case 2:
                 if(!footerPattern.matcher(sections[sections.length - 1]).matches()) {
                     // Check if part is body section instead of footer section
                     if(sections.length == 2 && !bodyPattern.matcher(sections[sections.length - 1]).matches()) {
-                        exitCode = 1;
+                        exitCode = 2;
                         break;
                     }
                 }
@@ -91,10 +83,9 @@ public class CommitMsgHook {
                 break;
             default:
                 // More than 3 parts => additional blank lines not supported by the format
-                exitCode = 1;
+                exitCode = 4;
         }
         
-        System.out.println("exitCode: " + exitCode);
         System.exit(exitCode);
     }
 
@@ -105,9 +96,7 @@ public class CommitMsgHook {
      */
     public static String getCommitTypes() {
         StringBuilder commitTypes = new StringBuilder("(feat|fix");
-        Path typesConfigFile = Paths.get(System.getProperty("user.dir"), "commit-types.config")
-                .normalize()
-                .toAbsolutePath();
+        Path typesConfigFile = Paths.get("scripts", "commit-types.config");     // TODO: for bats testing in "PROJECT/scripts", remove the "scripts" part from the path here
 
         try (BufferedReader fileReader = Files.newBufferedReader(typesConfigFile)) {
             String line;

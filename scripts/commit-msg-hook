@@ -1,6 +1,6 @@
 #!/usr/bin/java --source 21
-
 // TODO: Update path of your Java binary if necessary
+
 import java.util.regex.Pattern;
 
 import java.nio.file.Files;
@@ -99,7 +99,7 @@ public class CommitMsgHook {
      */
     public static String getCommitTypes() {
         StringBuilder commitTypes = new StringBuilder("(feat|fix");
-        Path typesConfigFile = Paths.get("commit-types.config");
+        Path typesConfigFile = Paths.get("commit-types.config");     // TODO: for bats testing in "PROJECT/scripts", remove the "scripts" part from the path here
 
         try (BufferedReader fileReader = Files.newBufferedReader(typesConfigFile)) {
             String line;
