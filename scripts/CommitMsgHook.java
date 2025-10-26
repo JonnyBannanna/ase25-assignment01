@@ -41,7 +41,8 @@ public class CommitMsgHook {
      * Main function to execute the validation process of commit messages.
      */
     public static void main(String[] args) {
-        String commitMessage = args[0];
+        //String commitMessage = args[0];
+        String commitMessage = "doc: add feature with colon";
         if(commitMessage.isEmpty()) { System.exit(1); }
         
         // Prepare regex patterns
@@ -57,9 +58,16 @@ public class CommitMsgHook {
         System.out.println("Footer: " + footerPattern);
         System.out.println("\n##########\n");
         */
+
+        System.out.println("Test message matches: " + headerPattern.matcher(commitMessage).matches());
     
         // Validate commit msg
         String[] sections = commitMessage.split("\\R\\R"); // Split at blank lines to separate the sections
+
+        for(int i = 0; i < sections.length; i++) {
+            System.out.println("sections[" + i + "]: " + sections[i]);
+        }
+
         int exitCode = 0;
 
         switch(sections.length){
@@ -86,6 +94,7 @@ public class CommitMsgHook {
                 exitCode = 1;
         }
         
+        System.out.println("exitCode: " + exitCode);
         System.exit(exitCode);
     }
 

@@ -1,6 +1,6 @@
 #!/usr/bin/java --source 21
-// TODO: Update path of your Java binary if necessary
 
+// TODO: Update path of your Java binary if necessary
 import java.util.regex.Pattern;
 
 import java.nio.file.Files;
@@ -99,7 +99,7 @@ public class CommitMsgHook {
      */
     public static String getCommitTypes() {
         StringBuilder commitTypes = new StringBuilder("(feat|fix");
-        Path typesConfigFile = Paths.get(System.getProperty("user.dir"), ".git", "hooks", "scripts", "commit-types.config")
+        Path typesConfigFile = Paths.get(System.getProperty("user.dir"), "commit-types.config")
                 .normalize()
                 .toAbsolutePath();
 
