@@ -99,9 +99,7 @@ public class CommitMsgHook {
      */
     public static String getCommitTypes() {
         StringBuilder commitTypes = new StringBuilder("(feat|fix");
-        Path typesConfigFile = Paths.get(System.getProperty("user.dir"), "commit-types.config")
-                .normalize()
-                .toAbsolutePath();
+        Path typesConfigFile = Paths.get("commit-types.config");
 
         try (BufferedReader fileReader = Files.newBufferedReader(typesConfigFile)) {
             String line;
