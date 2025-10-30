@@ -1,11 +1,8 @@
 #!/bin/sh
 
 # Call script with commit msg as first argument
-.git/hooks/scripts/commit-msg-hook "$1"
-value=$?
-
 if ! .git/hooks/scripts/commit-msg-hook "$1"; then
-  echo "Commit message does not have the required format: "
+  echo "Commit message does not have the required format"
   exit 1
 fi
 
