@@ -43,6 +43,10 @@ public class CommitMsgHook {
     public static void main(String[] args) {
         String commitMessage = args[0];
         if(commitMessage.isEmpty()) { System.exit(1); }
+        else if(commitMessage.equals(".git/COMMIT_EDITMSG")) {
+            // Required to differentiate between the bats testing input and real commits
+            commitMessage = readCommitMessage();
+        }
         
         // Prepare regex patterns
         Pattern headerPattern = Pattern.compile(headerSection);
@@ -65,14 +69,14 @@ public class CommitMsgHook {
         switch(sections.length){
             case 3:
                 if(!bodyPattern.matcher(sections[1]).matches()) {
-                    exitCode = 3;
+                    exitCode = 1;
                     break;
                 }
             case 2:
                 if(!footerPattern.matcher(sections[sections.length - 1]).matches()) {
                     // Check if part is body section instead of footer section
                     if(sections.length == 2 && !bodyPattern.matcher(sections[sections.length - 1]).matches()) {
-                        exitCode = 2;
+                        exitCode = 1;
                         break;
                     }
                 }
@@ -83,7 +87,7 @@ public class CommitMsgHook {
                 break;
             default:
                 // More than 3 parts => additional blank lines not supported by the format
-                exitCode = 4;
+                exitCode = 1;
         }
         
         System.exit(exitCode);
@@ -96,7 +100,7 @@ public class CommitMsgHook {
      */
     public static String getCommitTypes() {
         StringBuilder commitTypes = new StringBuilder("(feat|fix");
-        Path typesConfigFile = Paths.get("scripts", "commit-types.config");     // TODO: for bats testing in "PROJECT/scripts", remove the "scripts" part from the path here
+        Path typesConfigFile = Paths.get("commit-types.config");  // TODO: for bats testing in "PROJECT/scripts", remove the "scripts" part from the path here
 
         try (BufferedReader fileReader = Files.newBufferedReader(typesConfigFile)) {
             String line;
@@ -108,5 +112,27 @@ public class CommitMsgHook {
         } catch (IOException e) { e.printStackTrace(); }
 
         return commitTypes.append(")").toString();
+    }
+
+
+    /**
+     * Reads a commit message from the Commit_EDITMSG file.
+     * 
+     * @return the commit message read from .git/COMMIT_EDITMSG
+     */
+    public static String readCommitMessage() {
+        StringBuilder commitMessage = new StringBuilder();
+        Path commitMessageFile = Paths.get(System.getProperty("user.dir"), ".git", "COMMIT_EDITMSG");
+
+        try (BufferedReader fileReader = Files.newBufferedReader(commitMessageFile)) {
+            String line;
+
+            while ((line = fileReader.readLine()) != null) {
+                if(line.startsWith("#")) { continue; }     // Ignore comments
+                commitMessage.append(line.trim());
+            }
+        } catch (IOException e) { e.printStackTrace(); }
+
+        return commitMessage.toString();
     }
 }
